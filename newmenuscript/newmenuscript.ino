@@ -1,5 +1,6 @@
 #include <IRremote.h>
 #include <LiquidCrystal_I2C.h>
+
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 IRrecv irrecv(2);
 decode_results results;
@@ -38,13 +39,13 @@ int NormalC = 1;
 int ExtendedC;
 
 
-class Menu {
+class Menu { // Contains extended and normal menu display
   public:
-    void extended() {
-      Serial.println("Extended Menu update");
+    void extended() { // Second menu / only DISPLAYS extended menu
+      Serial.println("Extended Menu update"); // Prints it in Console for overview
       switch (ExtendedC) {
-        case 1:
-          Serial.println("MENU EXTENDED 1");
+        case 1: // Potentiometer
+          Serial.println("MENU EXTENDED 1"); // Prints it in Console for overview
           lcd.clear();
           lcd.print(">Potentiometer");
           lcd.setCursor(0, 1);
@@ -53,8 +54,8 @@ class Menu {
           lcd.print(" Kalibrierung");
           break;
 
-        case 2:
-          Serial.println("MENU EXTENDED Case 2");
+        case 2: // Bewegungsmelder
+          Serial.println("MENU EXTENDED Case 2"); // Prints it in Console for overview
           lcd.clear();
           lcd.print(" Potentiometer");
           lcd.setCursor(0, 1);
@@ -63,8 +64,8 @@ class Menu {
           lcd.print(" Kalibrierung");
           break;
 
-        case 3:
-          Serial.println("MENU EXTENDED Case 3");
+        case 3: // Kalibrierung
+          Serial.println("MENU EXTENDED Case 3"); // Prints it in Console for overview
           lcd.clear();
           lcd.print(" Potentiometer");
           lcd.setCursor(0, 1);
@@ -75,11 +76,11 @@ class Menu {
       }
     }
 
-    void normal() {
+    void normal() { // First Menu / only DISPLAYS normal menu
       Serial.println("Normal Menu updte");
       switch (NormalC) {
-        case 1:
-          Serial.println("MENU NORMAL Case 1");
+        case 1: // An
+          Serial.println("MENU NORMAL Case 1"); // Prints it in Console for overview
           lcd.clear();
           lcd.print(">An");
           lcd.setCursor(0, 1);
@@ -88,8 +89,8 @@ class Menu {
           lcd.print(" Schlafmodus");
           break;
 
-        case 2:
-          Serial.println("MENU NORMAL Case 2");
+        case 2: // Aus
+          Serial.println("MENU NORMAL Case 2"); // Prints it in Console for overview
           lcd.clear();
           lcd.print(" An");
           lcd.setCursor(0, 1);
@@ -98,8 +99,8 @@ class Menu {
           lcd.print(" Schlafmodus");
           break;
 
-        case 3:
-          Serial.println("MENU NORMAL Case 3");
+        case 3: // Schlafmodus
+          Serial.println("MENU NORMAL Case 3"); // Prints it in Console for overview
           lcd.clear();
           lcd.print(" An");
           lcd.setCursor(0, 1);
@@ -112,10 +113,10 @@ class Menu {
 };
 
 
-Menu menu;
+Menu menu; // Declares Menu class
 
 
-class Bewegungsmelder {
+class Bewegungsmelder { // Contains everything connected with the motion detector
   private:
     const int lichtvergleichswert = 10;
     int sensorwert;
@@ -124,13 +125,7 @@ class Bewegungsmelder {
     int entfernung3;
     bool returnvalue;
 
-    void swap(int arr[], int i1, int i2) {
-      int t = arr[i1];
-      arr[i1] = arr[i2];
-      arr[i2] = t;
-    }
-
-    bool sort(int arr[]) {
+    bool sort(int arr[]) { // Usses Insertion Sort to sort the array
       for (int i  = 1; i < 3; i++) {
         int key = arr[i];
         int j = i - 1;
@@ -141,15 +136,17 @@ class Bewegungsmelder {
         arr[j + 1] = key;
       }
 
-      if (arr[2] - arr[0] < 3) {
+      if (arr[2] - arr[0] < 3) { /* Takes the highest and the lowest value, calculates difference and compares them to some value
+        If the difference is smaller than 3 it returns true */
         return true;
       } else {
+        // Else it returns false
         return false;
       }
     }
 
   public:
-    float entfernung_abfrage() {
+    float entfernung_abfrage() { // Takes output from sound sensor
       Serial.println("BEWEGUNGSMELDER entfernungs_abfage");
       digitalWrite(trigger, LOW);
       delay(5);
@@ -157,11 +154,11 @@ class Bewegungsmelder {
       delay(10);
       digitalWrite(trigger, LOW);
       dauer = pulseIn(echo, HIGH);
-      entfernung = (dauer / 2) * 0.03432;
-      return entfernung;
+      entfernung = (dauer / 2) * 0.03432; //Convert distance into cm
+      return entfernung; // Returns difference
     }
 
-    bool licht_abfrage() {
+    bool licht_abfrage() { // If it's dark it returns true
       sensorwert = analogRead(licht);
       if (sensorwert < lichtvergleichswert) {
         return true;
@@ -173,7 +170,7 @@ class Bewegungsmelder {
 
     bool kalibrierung() {
       lcd.clear();
-      lcd.print("kalibriert...");
+      lcd.print("kalibriert..."); // Prints "kalibriert" onto display
 
       delay(200);
       entfernung1 = entfernung_abfrage();
@@ -181,10 +178,14 @@ class Bewegungsmelder {
       entfernung2 = entfernung_abfrage();
       delay(1000);
       entfernung3 = entfernung_abfrage();
+      // Takes a distance 3 times
 
-      int list[] = {entfernung1, entfernung2, entfernung3};
+
+      int list[] = {entfernung1, entfernung2, entfernung3}; // Compresses distances into list
+
 
       returnvalue = sort(list);
+
 
       if (returnvalue) {
         kalibrierwert = (entfernung1 + entfernung2 + entfernung3) / 3;
@@ -196,24 +197,27 @@ class Bewegungsmelder {
 };
 
 
-Bewegungsmelder bm;
+Bewegungsmelder bm; // Declares "Bewegungsmelder" class
 
 
-class Controller {
+class Controller { // Controls the motion sensor and Potentiometer (if activated)
   private:
     bool ledcheck = false;
     int previouswert;
     int wert;
+    bool licht;
+    float distance;
 
-    void Potimeter() {
+    void Potimeter() { // Sets Led Brightness equal to Potentiometer value
       Serial.println("CONTOLLER Potentiometer");
       wert = analogRead(poti) / 4 + 0.75;
-      if (wert - previouswert < -2 || wert - previouswert > 2) {
+      if (wert - previouswert < -2 || wert - previouswert > 2) { // If the value is different it resets timer for autosleep mode
         autosleep = millis();
       }
 
       previouswert = wert;
-      if (wert >= 247) {
+      if (wert >= 247) { /* if value too high turn led off
+      because otherwise it would flicker a bit */
         digitalWrite(led1, HIGH);
         digitalWrite(led2, HIGH);
       } else {
@@ -222,27 +226,30 @@ class Controller {
       }
     }
 
-    void Bewegungsmelder() {
+    void Bewegungsmelder() {  /* Controls sound sensor
+    if it's dark and the measured distance is smaller than the calibratet distance it turns lights on for 10 seconds */
       Serial.println("CONTROLLER Bewegungsmelder");
-      if (ledcheck) {
+      if (ledcheck) { // Basically a 10 sec counter
         if (millis() - timestamp >= 10000) {
           digitalWrite(led1, HIGH);
           digitalWrite(led2, HIGH);
           ledcheck = false;
         }
       }
-      bool licht = bm.licht_abfrage();
-      float distance = bm.entfernung_abfrage();
+
+      licht = bm.licht_abfrage();
+      distance = bm.entfernung_abfrage();
+
       if  (licht && distance < kalibrierwert) {
         digitalWrite(led1, LOW);
         digitalWrite(led2, LOW);
         timestamp = millis();
-        ledcheck = true;
+        ledcheck = true; // Sets var to true so the func checks 10 sec counter
       }
     }
 
   public:
-    void Init() {
+    void Init() { // Calls funcions above
       if (regler) {
         Potimeter();
       }
@@ -253,15 +260,15 @@ class Controller {
 };
 
 
-Controller controller;
+Controller controller; // Declares Controller class
 
 
 class Actions {
   private:
-    bool kalibriert = false;
-    bool loopB = false;
+    bool kalibriert = false; // Used to check if the sensor was already "calibrated"
+    bool loopB = false; // We use a bool to controll the wile loop so we can break out of 2 loops "at the same time"
 
-    void indicatorcheck() {
+    void indicatorcheck() { // Turns lights for Potentiometer and sound sensor on and off. Based on if it's on or off
       Serial.println("Indicatorcheck");
       if (regler) {
         digitalWrite(iregler, HIGH);
@@ -276,27 +283,27 @@ class Actions {
     }
 
 
-    void Regler() {
-      modus  = false;
+    void Regler() { // Turns Potentiometer on and off
+      modus  = false; // Sets variable for sound sensor to false
       regler = not(regler);
       if (!regler) {
-        digitalWrite(led1, HIGH);
+        digitalWrite(led1, HIGH); // Turns Led's off if Potentiometer is turned off
         digitalWrite(led2, HIGH);
-        ledpwm = 240;
+        ledpwm = 240; // used to track status of the leds
       }
-      indicatorcheck();
+      indicatorcheck(); // checks indicator leds
     }
 
-    void Melder() {
-      if (kalibriert) {
-        digitalWrite(led1, HIGH);
+    void Melder() { // Turns sound sensor on or off
+      if (kalibriert) { // if sound sensor was already calibrated
+        digitalWrite(led1, HIGH); // turns leds off
         digitalWrite(led2, HIGH);
-        ledpwm = 240;
+        ledpwm = 240; // used to track status of leds
 
         regler = false;
         modus = not(modus);
         indicatorcheck();
-      } else {
+      } else { // gets activated if sound sensor was not calibrated
         lcd.clear();
         lcd.print("Der Bewegungsmelder");
         lcd.setCursor(0, 1);
@@ -304,50 +311,54 @@ class Actions {
         lcd.setCursor(0, 2);
         lcd.print("kalibriert.");
         delay(2000);
-        menu.extended();
+        menu.extended(); // updates second menu
       }
     }
 
   public:
     void sleepmode() {
-      lcd.clear();
-      lcd.noBacklight(); // Schaltet das Licht des lcd-Displays aus
-      analogWrite(iregler, 0);
-      analogWrite(ibewegungsmelder, 0);
-      delay (t);
-      irrecv.resume();
+      lcd.clear(); // clears display
+      lcd.noBacklight(); // Turns display off
 
-      while (true) {
+      digitalWrite(iregler, LOW); // Turns indicators off
+      digitalWrite(ibewegungsmelder, LOW);
+      delay (t);
+      irrecv.resume(); // Continues to receive infrared light
+
+      while (true) { // goes into a while loop
         Serial.println("SLEEPMODE");
-        controller.Init();
+        controller.Init(); // Checks Potentiometer and sound sensor
         if (digitalRead(sw_pin)) {
           Serial.println("SLEEPMODE Button Exit");
-          autosleep = millis();
+          autosleep = millis(); // resets timer for autosleepmode
           break;
         }
-        if (irrecv.decode(&results)) {
-          if (results.value == 0xFF02FD) {
+        if (irrecv.decode(&results)) { // if infrared light is received
+          if (results.value == 0xFF02FD) { // if >|| button is pressed
             Serial.println("SLEEPMODE Remote Exit");
-            autosleep = millis();
-            irrecv.resume();
+            autosleep = millis(); // resets timer for autosleepmode
+            irrecv.resume(); // Continues to receive infrared light
             break;
           }
         }
-      }
-      lcd.backlight();
-      indicatorcheck();
-      menu.normal();
+      } 
+      //Gets triggered when you exit sleepmode
+      lcd.backlight(); // Turns display on
+      indicatorcheck(); // checks indicators
+      menu.normal(); // updates normal menu
       delay(t);
+      //
     }
 
-    void autosleepCheck() {
+    void autosleepCheck() { // after 2m without any actions the arduino goes into sleepmode automatically
       if (millis() - autosleep >= 120000) {
         sleepmode();
       }
     }
 
-    void func() {
-      lcd.clear();
+    void funcmode() { // activates Potentiometer, sound sensor and calibration via remote control (or disables it)
+      lcd.clear(); // clears display
+      // Prints options that you have in funcmode
       if (regler) {
         lcd.print("1- Poti aus");
       } else {
@@ -364,17 +375,29 @@ class Actions {
       lcd.setCursor(0, 3);
       lcd.print("Func- Exit");
       delay(400);
-      irrecv.resume();
+      irrecv.resume(); // Contines to receive infrared light
       loopB = true;
       Serial.println("Im FUNKTIONSMODUS");
+      //
+
       while (loopB) {
+        if (digitalRead(sw_pin)){ // Exits out without doing anything
+          Serial.println("FUNKTIONSMODUS button exit");
+          if (ExtendedB) {
+            menu.extended();
+          } else {
+            menu.normal();
+          }
+          loopB = false;
+        }
         if (irrecv.decode(&results)) {
           switch (results.value) {
-            case 0xFF30CF: // 1
+            case 0xFF30CF: // remote button 1
+              // turns Potentiometer on or off
               Serial.println("FUNKTIONSMODUS 1-Taste");
               Regler();
               delay(t);
-              if (ExtendedB) {
+              if (ExtendedB) { // updates display
                 menu.extended();
               } else {
                 menu.normal();
@@ -384,11 +407,12 @@ class Actions {
               Serial.println("break;");
               break;
 
-            case 0xFF18E7: // 2
+            case 0xFF18E7: // remote button 2
+              // turns sound sensor on or off
               Serial.println("FUNKTIONSMODUS 2-Taste");
               Melder();
               delay(t);
-              if (ExtendedB) {
+              if (ExtendedB) { // updates display
                 menu.extended();
               } else {
                 menu.normal();
@@ -399,7 +423,8 @@ class Actions {
               Serial.println("break;");
               break;
 
-            case 0xFF7A85: // 3
+            case 0xFF7A85: // remote button 3
+              // goes into calibration if sound sensor is off
               Serial.println("FUNKTIONSMODUS 3-Taste");
               if (modus) {
                 lcd.clear();
@@ -408,12 +433,12 @@ class Actions {
                 lcd.print("Bewegungsmelder aus");
               } else {
                 kalibriert = bm.kalibrierung();
-                if (kalibriert) {
+                if (kalibriert) { // if calibration was sucesfull
                   lcd.clear();
                   lcd.print("Kalibrierung");
                   lcd.setCursor(0, 1);
                   lcd.print("erfolgreich");
-                } else {
+                } else { // if calibration failed
                   lcd.clear();
                   lcd.print("Kalibrierung");
                   lcd.setCursor(0, 1);
@@ -421,7 +446,7 @@ class Actions {
                 }
               }
               delay(2000);
-              if (ExtendedB) {
+              if (ExtendedB) { // updates display
                 menu.extended();
               } else {
                 menu.normal();
@@ -431,10 +456,11 @@ class Actions {
               Serial.println("break;");
               break;
 
-            case 0xFFE21D: //Func
+            case 0xFFE21D: //remote Func-button
+              // Exits out without doing anything
               Serial.println("FUNKTIONSMODUS Func-Taste");
               delay(t);
-              if (ExtendedB) {
+              if (ExtendedB) { // updates display
                 menu.extended();
               } else {
                 menu.normal();
@@ -444,25 +470,25 @@ class Actions {
               Serial.println("break;");
               break;
           }
-          irrecv.resume();
+          irrecv.resume(); // continues to receive infrared light
         }
       }
     }
 
 
-    void extended(int extendedC) {
-      switch (extendedC) {
-        case 1:
+    void extended(int extendedC) { // Actions that are triggered if you press "ok-button" in second/extended Menu
+      switch (extendedC) { // Takes extendedC to determine which action to triger
+        case 1: // Potentiometer
           Serial.println("Extended Action 1");
           Regler();
           break;
 
-        case 2:
+        case 2: // Sound sensor
           Serial.println("Extended Action 2");
           Melder();
           break;
 
-        case 3:
+        case 3: // triggers calibration
           Serial.println("Extended Action 3");
           if (modus) {
             lcd.clear();
@@ -486,14 +512,14 @@ class Actions {
             }
           }
           delay(2000);
-          menu.extended();
+          menu.extended(); // refresh display
           break;
       }
     }
 
-    void normal(int normalC) {
-      switch (normalC) {
-        case 1:
+    void normal(int normalC) { // Actions that are triggered if you press "ok-button" in first/normal Menu
+      switch (normalC) { // Takes normalC to determine which action to trigger
+        case 1: // turns leds on
           Serial.println("Normal Action 1");
           led = true;
           regler = false;
@@ -505,7 +531,7 @@ class Actions {
           digitalWrite(led2, LOW);
           break;
 
-        case 2:
+        case 2: // turns leds off
           Serial.println("Normal Action 2");
           led = false;
           regler = false;
@@ -516,7 +542,7 @@ class Actions {
           digitalWrite(led2, HIGH);
           break;
 
-        case 3:
+        case 3: // turns sleepmode on
           Serial.println("Normal Action 3");
           sleepmode();
           break;
@@ -525,14 +551,15 @@ class Actions {
 };
 
 
-Actions actions;
+Actions actions; // Declares Action class
 
 
-class InputManager {
+class InputManager { // Controlls Inputs and triggers actions
   private:
-    void remoteControl(int code) {
+    void remoteControl(int code) { // Controls remote control inputs
       switch (code) {
-        case 0xFFA25D: //Power-Taste
+        case 0xFFA25D: // Power-button
+          // Turns leds on or off (depends on led status)
           irrecv.resume();
           regler = false;
           modus = false;
@@ -552,14 +579,16 @@ class InputManager {
           delay(t);
           break;
 
-        case 0xFFE21D: //Funktions-Taste
+        case 0xFFE21D: // Funktions-Taste
+          // Goes into function mode
           Serial.println("Funktions Taste");
           irrecv.resume();
-          actions.func();
+          actions.funcmode();
           delay(t);
           break;
 
         case 0xFFE01F: //Down-Taste
+          // Dimms led
           Serial.println("Down-Taste");
           if (modus == false && regler == false && ledpwm < 240) {
             irrecv.resume();
@@ -578,6 +607,7 @@ class InputManager {
           break;
 
         case 0xFF906F: //Up-Taste
+          // brightens led
           Serial.println("Up-Taste");
           if (modus == false && regler == false && ledpwm > 60) {
             Serial.print("Davor: ");
@@ -595,12 +625,14 @@ class InputManager {
           break;
 
         case 0xFF02FD: // >||
+          // Goes into sleepmode
           Serial.println("Pause Weiter");
           actions.sleepmode();
           delay(t);
           break;
 
         case 0xFF30CF: // 1
+          // Led almost off
           if (modus == false && regler == false) {
             Serial.println("1 Taste");
             analogWrite(led1, 240);
@@ -612,6 +644,7 @@ class InputManager {
           break;
 
         case 0xFF18E7: // 2
+          // Led mid brightness
           if (modus == false && regler == false) {
             Serial.println("2 Taste");
             analogWrite(led1, 160);
@@ -622,6 +655,7 @@ class InputManager {
           break;
 
         case 0xFF7A85: // 3
+          // Led almost max brightness
           if (modus == false && regler == false) {
             Serial.println("3 Taste");
             analogWrite(led1, 80);
@@ -633,6 +667,7 @@ class InputManager {
           break;
 
         case 0xFF9867: // EQ
+          // Turns sound sensor and Potentiometer off
           Serial.println("EQ Taste");
           regler = false;
           modus = false;
@@ -647,19 +682,21 @@ class InputManager {
     }
 
   public:
-    void Init() {
+    void Init() { // initializes "InputManager"
       if (irrecv.decode(&results)) {
         Serial.print("Infrarot Messung: ");
         Serial.println(results.value);
         delay(t);
         irrecv.resume();
-        autosleep = millis();
+        autosleep = millis(); // resets autosleepmode timer
         remoteControl(results.value);
       }
+
 
       int y = analogRead(y_pin);
       int x = analogRead(x_pin);
       int sw = digitalRead(sw_pin);
+
 
       if (ExtendedB) {
         if (y > 1000) {
@@ -728,10 +765,10 @@ class InputManager {
 };
 
 
-InputManager inputmanager;
+InputManager inputmanager; // Declares InputManager
 
 
-void setup() {
+void setup() { // Declares pinMode and initializes display
   Serial.begin(9600);
   lcd.begin();
   lcd.backlight();
@@ -755,7 +792,7 @@ void setup() {
 }
 
 
-void loop() {
+void loop() { // Calls InputManager, Controller and 
   inputmanager.Init();
   controller.Init();
   actions.autosleepCheck();
