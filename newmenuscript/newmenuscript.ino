@@ -155,7 +155,7 @@ class Bewegungsmelder { // Contains everything connected with the motion detecto
       digitalWrite(trigger, LOW);
       dauer = pulseIn(echo, HIGH);
       entfernung = (dauer / 2) * 0.03432; //Convert distance into cm
-      return entfernung; // Returns difference
+      return entfernung; // Returns distance
     }
 
     bool licht_abfrage() { // If it's dark it returns true
