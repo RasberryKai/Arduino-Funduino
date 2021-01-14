@@ -40,7 +40,7 @@ void loop() { // Prints all important data to the Console
   Serial.println(analogRead(licht));
   Serial.print("Potentiometer: ");
   Serial.println(analogRead(poti));
-  Serial.print("Joystick: ");
+  Serial.println("Joystick: ");
   Serial.print("x: ");
   Serial.println(analogRead(x_pin));
   Serial.print("y: ");

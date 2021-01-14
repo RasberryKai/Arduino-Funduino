@@ -12,7 +12,7 @@ long entfernung = 0;
 
 const int x_pin = A1;
 const int y_pin = A0;
-const int sw_pin = 10;
+const int button = 10;
 const int led1 = 6;
 const int led2 = 5;
 
@@ -118,7 +118,7 @@ Menu menu; // Declares Menu class
 
 class Bewegungsmelder { // Contains everything connected with the motion detector
   private:
-    const int lichtvergleichswert = 10;
+    const int lichtvergleichswert = 5;
     int sensorwert;
     int entfernung1;
     int entfernung2;
@@ -328,7 +328,7 @@ class Actions {
       while (true) { // goes into a while loop
         Serial.println("SLEEPMODE");
         controller.Init(); // Checks Potentiometer and sound sensor
-        if (digitalRead(sw_pin)) {
+        if (digitalRead(button)) {
           Serial.println("SLEEPMODE Button Exit");
           autosleep = millis(); // resets timer for autosleepmode
           break;
@@ -381,7 +381,7 @@ class Actions {
       //
 
       while (loopB) {
-        if (digitalRead(sw_pin)){ // Exits out without doing anything
+        if (digitalRead(button)){ // Exits out without doing anything
           Serial.println("FUNKTIONSMODUS button exit");
           if (ExtendedB) {
             menu.extended();
@@ -631,6 +631,12 @@ class InputManager { // Controlls Inputs and triggers actions
           delay(t);
           break;
 
+        // Hier
+          // könnte
+            // vielleicht
+          // Code
+        // stehen
+
         case 0xFF30CF: // 1
           // Led almost off
           if (modus == false && regler == false) {
@@ -695,22 +701,17 @@ class InputManager { // Controlls Inputs and triggers actions
 
       int y = analogRead(y_pin);
       int x = analogRead(x_pin);
-      int sw = digitalRead(sw_pin);
 
 
       if (ExtendedB) {
-        if (y > 1000) {
+        if (y > 900) {
           autosleep = millis();
           Serial.println("Extended -> Normal");
           ExtendedB = false;
           NormalB = true;
-          if (ExtendedC == 4) {
-            NormalC = 3;
-          } else {
-            NormalC = ExtendedC;
-          }
+          NormalC = ExtendedC;
           menu.normal();
-          while (analogRead(y_pin) > 1000);
+          while (analogRead(y_pin) > 900);
         }
         if (x > 1000 && ExtendedC != 3) {
           autosleep = millis();
@@ -718,28 +719,28 @@ class InputManager { // Controlls Inputs and triggers actions
           ExtendedC ++;
           menu.extended();
           while (analogRead(x_pin) > 1000);
-        } else if (x < 10 && ExtendedC != 1) {
+        } else if (x < 250 && ExtendedC != 1) {
           autosleep = millis();
           Serial.println("Extended Up");
           ExtendedC --;
           menu.extended();
-          while (analogRead(x_pin) < 10);
+          while (analogRead(x_pin) < 250);
         }
-        if (sw) {
+        if (digitalRead(button)) {
           autosleep = millis();
           Serial.println("Extended Button");
           actions.extended(ExtendedC);
-          while (digitalRead(sw_pin));
+          while (digitalRead(button));
         }
       } else {
-        if (y < 10) {
+        if (y < 100) {
           autosleep = millis();
           Serial.println("Normal -> Extended");
           NormalB = false;
           ExtendedB = true;
           ExtendedC = NormalC;
           menu.extended();
-          while (analogRead(y_pin) < 10);
+          while (analogRead(y_pin) < 100);
         }
         if (x > 1000 && NormalC != 3) {
           autosleep = millis();
@@ -747,18 +748,18 @@ class InputManager { // Controlls Inputs and triggers actions
           NormalC ++;
           menu.normal();
           while (analogRead(x_pin) > 1000);
-        } else if (x < 10 && NormalC != 1) {
+        } else if (x < 250 && NormalC != 1) {
           autosleep = millis();
           Serial.println("Normal Up");
           NormalC --;
           menu.normal();
-          while (analogRead(x_pin) < 10);
+          while (analogRead(x_pin) < 250);
         }
-        if (sw) {
+        if (digitalRead(button)) {
           autosleep = millis();
           Serial.println("Normal Button");
           actions.normal(NormalC);
-          while (digitalRead(sw_pin));
+          while (digitalRead(button));
         }
       }
     }
@@ -778,7 +779,7 @@ void setup() { // Declares pinMode and initializes display
   pinMode(x_pin, INPUT);
   pinMode(y_pin, INPUT);
 
-  pinMode(sw_pin, INPUT);
+  pinMode(button, INPUT);
   pinMode(licht, INPUT);
   timestamp = millis();
 
