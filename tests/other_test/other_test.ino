@@ -6,7 +6,7 @@ LiquidCrystal_I2C lcd(0x27, 20, 4);
 const int led1 = 5;
 const int led2 = 6;
 const int iregler = 4;
-const int ibewegungsmelder = 7;
+const int B = 7;
 
 void setup() {
   lcd.begin();
@@ -14,7 +14,7 @@ void setup() {
   pinMode(led1, OUTPUT);
   pinMode(led2, OUTPUT);
   pinMode(iregler, OUTPUT);
-  pinMode(ibewegungsmelder, OUTPUT);
+  pinMode(B, OUTPUT);
   digitalWrite(led1, HIGH);
   digitalWrite(led2, HIGH);
   delay(5000);
@@ -27,10 +27,10 @@ void loop() {
   digitalWrite(iregler, LOW);
   Serial.println("Potentiometer Indicator off");
   delay(2000);
-  digitalWrite(ibewegungsmelder, HIGH);
+  digitalWrite(B, HIGH);
   Serial.println("Bewegungsmelder Indicator on");
   delay(2000);
-  digitalWrite(ibewegungsmelder, LOW);
+  digitalWrite(B, LOW);
   Serial.println("Bewegungsmelder Indicator off");
   delay(2000);
   lcd.noBacklight();
