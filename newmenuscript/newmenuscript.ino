@@ -713,12 +713,12 @@ class InputManager { // Controlls Inputs and triggers actions
           menu.normal();
           while (analogRead(y_pin) > 900);
         }
-        if (x > 1000 && ExtendedC != 3) {
+        if (x > 900 && ExtendedC != 3) {
           autosleep = millis();
           Serial.println("Extended Down");
           ExtendedC ++;
           menu.extended();
-          while (analogRead(x_pin) > 1000);
+          while (analogRead(x_pin) > 900);
         } else if (x < 250 && ExtendedC != 1) {
           autosleep = millis();
           Serial.println("Extended Up");
@@ -742,12 +742,12 @@ class InputManager { // Controlls Inputs and triggers actions
           menu.extended();
           while (analogRead(y_pin) < 100);
         }
-        if (x > 1000 && NormalC != 3) {
+        if (x > 900 && NormalC != 3) {
           autosleep = millis();
           Serial.println("Normal Down");
           NormalC ++;
           menu.normal();
-          while (analogRead(x_pin) > 1000);
+          while (analogRead(x_pin) > 900);
         } else if (x < 250 && NormalC != 1) {
           autosleep = millis();
           Serial.println("Normal Up");
