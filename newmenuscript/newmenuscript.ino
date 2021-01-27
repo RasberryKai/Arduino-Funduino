@@ -29,6 +29,7 @@ unsigned long timestamp;
 unsigned long autosleep;
 
 bool led = false;
+bool bew_poti = false;
 
 bool NormalB = true;
 bool ExtendedB = false;
@@ -52,6 +53,12 @@ class Menu { // Contains extended and normal menu display
           lcd.print(" Bewegungsmelder");
           lcd.setCursor(0, 2);
           lcd.print(" Kalibrierung");
+          lcd.setCursor(0, 3);
+          if (bew_poti) {
+            lcd.print(" Bew.-Meld-Poti aus");
+          } else {
+            lcd.print(" Bew.-Meld-Poti an");
+          }
           break;
 
         case 2: // Bewegungsmelder
@@ -62,6 +69,12 @@ class Menu { // Contains extended and normal menu display
           lcd.print(">Bewegungsmelder");
           lcd.setCursor(0, 2);
           lcd.print(" Kalibrierung");
+          lcd.setCursor(0, 3);
+          if (bew_poti) {
+            lcd.print(" Bew.-Meld-Poti aus");
+          } else {
+            lcd.print(" Bew.-Meld-Poti an");
+          }
           break;
 
         case 3: // Kalibrierung
@@ -72,6 +85,28 @@ class Menu { // Contains extended and normal menu display
           lcd.print(" Bewegungsmelder");
           lcd.setCursor(0, 2);
           lcd.print(">Kalibrierung");
+          lcd.setCursor(0, 3);
+          if (bew_poti) {
+            lcd.print(" Bew.-Meld-Poti aus");
+          } else {
+            lcd.print(" Bew.-Meld-Poti an");
+          }
+          break;
+
+        case 4:
+          Serial.println("MENU EXTENDED Case 4");
+          lcd.clear();
+          lcd.print(" Potentiometer");
+          lcd.setCursor(0, 1);
+          lcd.print(" Bewegungsmelder");
+          lcd.setCursor(0, 2);
+          lcd.print(" Kalibrierung");
+          lcd.setCursor(0, 3);
+          if (bew_poti) {
+            lcd.print(">Bew.-Meld-Poti aus");
+          } else {
+            lcd.print(">Bew.-Meld-Poti an");
+          }
           break;
       }
     }
@@ -136,8 +171,9 @@ class Bewegungsmelder { // Contains everything connected with the motion detecto
         arr[j + 1] = key;
       }
 
-      if (arr[2] - arr[0] < 3) { /* Takes the highest and the lowest value, calculates difference and compares them to some value
-        If the difference is smaller than 3 it returns true */
+      if (arr[2] - arr[0] < 3) {
+        /* Takes the highest and the lowest value, calculates difference and compares them to some value
+          If the difference is smaller than 3 it returns true */
         return true;
       } else {
         // Else it returns false
@@ -216,8 +252,9 @@ class Controller { // Controls the motion sensor and Potentiometer (if activated
       }
 
       previouswert = wert;
-      if (wert >= 247) { /* if value too high turn led off
-      because otherwise it would flicker a bit */
+      if (wert >= 247) {
+        /* if value too high turn led off
+          because otherwise it would flicker a bit */
         digitalWrite(led1, HIGH);
         digitalWrite(led2, HIGH);
       } else {
@@ -226,10 +263,14 @@ class Controller { // Controls the motion sensor and Potentiometer (if activated
       }
     }
 
-    void Bewegungsmelder() {  /* Controls sound sensor
-    if it's dark and the measured distance is smaller than the calibratet distance it turns lights on for 10 seconds */
+    void Bewegungsmelder() {
+      /* Controls sound sensor
+        if it's dark and the measured distance is smaller than the calibratet distance it turns lights on for 10 seconds */
       Serial.println("CONTROLLER Bewegungsmelder");
-      if (ledcheck) { // Basically a 10 sec counter
+      if (ledcheck) { // If motion-sensor was triggered
+        if (bew_poti) {
+          Potimeter();
+        }
         if (millis() - timestamp >= 10000) {
           digitalWrite(led1, HIGH);
           digitalWrite(led2, HIGH);
@@ -241,8 +282,10 @@ class Controller { // Controls the motion sensor and Potentiometer (if activated
       distance = bm.entfernung_abfrage();
 
       if  (licht && distance < kalibrierwert) {
-        digitalWrite(led1, LOW);
-        digitalWrite(led2, LOW);
+        if (!bew_poti) {
+          digitalWrite(led1, LOW);
+          digitalWrite(led2, LOW);
+        }
         timestamp = millis();
         ledcheck = true; // Sets var to true so the func checks 10 sec counter
       }
@@ -267,6 +310,7 @@ class Actions {
   private:
     bool kalibriert = false; // Used to check if the sensor was already "calibrated"
     bool loopB = false; // We use a bool to controll the wile loop so we can break out of 2 loops "at the same time"
+    bool second = false; // used to track the funcmode menu state
 
     void indicatorcheck() { // Turns lights for Potentiometer and sound sensor on and off. Based on if it's on or off
       Serial.println("Indicatorcheck");
@@ -287,7 +331,7 @@ class Actions {
       modus  = false; // Sets variable for sound sensor to false
       regler = not(regler);
       if (!regler) {
-        digitalWrite(led1, HIGH); // Turns Led's off if Potentiometer is turned off
+        digitalWrite(led1, HIGH);
         digitalWrite(led2, HIGH);
         ledpwm = 240; // used to track status of the leds
       }
@@ -341,7 +385,7 @@ class Actions {
             break;
           }
         }
-      } 
+      }
       //Gets triggered when you exit sleepmode
       lcd.backlight(); // Turns display on
       indicatorcheck(); // checks indicators
@@ -373,7 +417,11 @@ class Actions {
       lcd.setCursor(0, 2);
       lcd.print("3- Kalibrierung");
       lcd.setCursor(0, 3);
-      lcd.print("Func- Exit");
+      if (bew_poti) {
+        lcd.print("4- Bew.-Meld-Poti aus");
+      } else {
+        lcd.print("4- Bew.-Meld-Poti an");
+      }
       delay(400);
       irrecv.resume(); // Contines to receive infrared light
       loopB = true;
@@ -381,7 +429,7 @@ class Actions {
       //
 
       while (loopB) {
-        if (digitalRead(button)){ // Exits out without doing anything
+        if (digitalRead(button)) { // Exits out without doing anything
           Serial.println("FUNKTIONSMODUS button exit");
           if (ExtendedB) {
             menu.extended();
@@ -456,6 +504,19 @@ class Actions {
               Serial.println("break;");
               break;
 
+            case 0xFF10EF: // remote button 4
+              bew_poti = not(bew_poti);
+              menu.extended();
+              digitalWrite(iregler, HIGH);
+              delay(400);
+              digitalWrite(iregler, LOW);
+              delay(200);
+              indicatorcheck();
+              loopB = false;
+              Serial.println("loopB = false");
+              Serial.println("break;");
+              break;
+
             case 0xFFE21D: //remote Func-button
               // Exits out without doing anything
               Serial.println("FUNKTIONSMODUS Func-Taste");
@@ -469,6 +530,39 @@ class Actions {
               Serial.println("loopB = false");
               Serial.println("break;");
               break;
+
+            case 0xFF906F: // Up-Taste
+              if (second) {
+                lcd.clear();
+                if (regler) {
+                  lcd.print("1- Poti aus");
+                } else {
+                  lcd.print("1- Poti an");
+                }
+                lcd.setCursor(0, 1);
+                if (modus) {
+                  lcd.print("2- Bew.-meld. aus");
+                } else {
+                  lcd.print("2- Bew.-meld. an");
+                }
+                lcd.setCursor(0, 2);
+                lcd.print("3- Kalibrierung");
+                lcd.setCursor(0, 3);
+                if (bew_poti) {
+                  lcd.print("4- Bew.-Meld-Poti aus");
+                } else {
+                  lcd.print("4- Bew.-Meld-Poti an");
+                }
+                second = false;
+              } // second end
+              break; // UP-Taste Ende
+
+            case 0xFFE01F: // Down-Taste
+              if (!second) {
+                lcd.clear();
+                lcd.print("Func- Exit");
+                second = true;
+              }
           }
           irrecv.resume(); // continues to receive infrared light
         }
@@ -514,6 +608,17 @@ class Actions {
           delay(2000);
           menu.extended(); // refresh display
           break;
+
+        case 4: // Bew.-Meld-Poti
+          bew_poti = not(bew_poti);
+          menu.extended();
+          digitalWrite(iregler, HIGH);
+          delay(400);
+          digitalWrite(iregler, LOW);
+          delay(200);
+          indicatorcheck();
+          break;
+
       }
     }
 
@@ -632,9 +737,9 @@ class InputManager { // Controlls Inputs and triggers actions
           break;
 
         // Hier
-          // könnte
-            // vielleicht
-          // Code
+        // könnte
+        // vielleicht
+        // Code
         // stehen
 
         case 0xFF30CF: // 1
@@ -709,11 +814,15 @@ class InputManager { // Controlls Inputs and triggers actions
           Serial.println("Extended -> Normal");
           ExtendedB = false;
           NormalB = true;
-          NormalC = ExtendedC;
+          if (ExtendedC <= 3) {
+            NormalC = ExtendedC;
+          } else {
+            NormalC = 3;
+          }
           menu.normal();
           while (analogRead(y_pin) > 900);
         }
-        if (x > 900 && ExtendedC != 3) {
+        if (x > 900 && ExtendedC != 4) {
           autosleep = millis();
           Serial.println("Extended Down");
           ExtendedC ++;
@@ -793,7 +902,7 @@ void setup() { // Declares pinMode and initializes display
 }
 
 
-void loop() { // Calls InputManager, Controller and 
+void loop() { // Calls InputManager, Controller and
   inputmanager.Init();
   controller.Init();
   actions.autosleepCheck();
