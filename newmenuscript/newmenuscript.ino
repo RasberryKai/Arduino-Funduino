@@ -310,7 +310,7 @@ class Actions {
   private:
     bool kalibriert = false; // Used to check if the sensor was already "calibrated"
     bool loopB = false; // We use a bool to controll the wile loop so we can break out of 2 loops "at the same time"
-    bool second = false; // used to track the funcmode menu state
+//    bool second = false; // used to track the funcmode menu state
 
     void indicatorcheck() { // Turns lights for Potentiometer and sound sensor on and off. Based on if it's on or off
       Serial.println("Indicatorcheck");
@@ -417,11 +417,11 @@ class Actions {
       lcd.setCursor(0, 2);
       lcd.print("3- Kalibrierung");
       lcd.setCursor(0, 3);
-      if (bew_poti) {
-        lcd.print("4- Bew.-Meld-Poti aus");
-      } else {
-        lcd.print("4- Bew.-Meld-Poti an");
-      }
+//      if (bew_poti) {
+//        lcd.print("4- Bew.-Meld-Poti aus");
+//      } else {
+//        lcd.print("4- Bew.-Meld-Poti an");
+//      }
       delay(400);
       irrecv.resume(); // Contines to receive infrared light
       loopB = true;
@@ -504,18 +504,18 @@ class Actions {
               Serial.println("break;");
               break;
 
-            case 0xFF10EF: // remote button 4
-              bew_poti = not(bew_poti);
-              menu.extended();
-              digitalWrite(iregler, HIGH);
-              delay(400);
-              digitalWrite(iregler, LOW);
-              delay(200);
-              indicatorcheck();
-              loopB = false;
-              Serial.println("loopB = false");
-              Serial.println("break;");
-              break;
+            //case 0xFF10EF: // remote button 4
+              //bew_poti = not(bew_poti);
+              //menu.extended();
+              //digitalWrite(iregler, HIGH);
+              //delay(400);
+              //digitalWrite(iregler, LOW);
+              //delay(200);
+              //indicatorcheck();
+              //loopB = false;
+              //Serial.println("loopB = false");
+              //Serial.println("break;");
+              //break;
 
             case 0xFFE21D: //remote Func-button
               // Exits out without doing anything
@@ -531,38 +531,38 @@ class Actions {
               Serial.println("break;");
               break;
 
-            case 0xFF906F: // Up-Taste
-              if (second) {
-                lcd.clear();
-                if (regler) {
-                  lcd.print("1- Poti aus");
-                } else {
-                  lcd.print("1- Poti an");
-                }
-                lcd.setCursor(0, 1);
-                if (modus) {
-                  lcd.print("2- Bew.-meld. aus");
-                } else {
-                  lcd.print("2- Bew.-meld. an");
-                }
-                lcd.setCursor(0, 2);
-                lcd.print("3- Kalibrierung");
-                lcd.setCursor(0, 3);
-                if (bew_poti) {
-                  lcd.print("4- Bew.-Meld-Poti aus");
-                } else {
-                  lcd.print("4- Bew.-Meld-Poti an");
-                }
-                second = false;
-              } // second end
-              break; // UP-Taste Ende
+//            case 0xFF906F: // Up-Taste
+//              if (second) {
+//                lcd.clear();
+//                if (regler) {
+//                  lcd.print("1- Poti aus");
+//                } else {
+//                  lcd.print("1- Poti an");
+//                }
+//                lcd.setCursor(0, 1);
+//                if (modus) {
+//                  lcd.print("2- Bew.-meld. aus");
+//                } else {
+//                  lcd.print("2- Bew.-meld. an");
+//                }
+//                lcd.setCursor(0, 2);
+//                lcd.print("3- Kalibrierung");
+//                lcd.setCursor(0, 3);
+//                if (bew_poti) {
+//                  lcd.print("4- Bew.-Meld-Poti aus");
+//                } else {
+//                  lcd.print("4- Bew.-Meld-Poti an");
+//                }
+//                second = false;
+//              } // second end
+//              break; // UP-Taste Ende
 
-            case 0xFFE01F: // Down-Taste
-              if (!second) {
-                lcd.clear();
-                lcd.print("Func- Exit");
-                second = true;
-              }
+//            case 0xFFE01F: // Down-Taste
+//              if (!second) {
+//                lcd.clear();
+//                lcd.print("Func- Exit");
+//                second = true;
+//              }
           }
           irrecv.resume(); // continues to receive infrared light
         }
@@ -735,12 +735,6 @@ class InputManager { // Controlls Inputs and triggers actions
           actions.sleepmode();
           delay(t);
           break;
-
-        // Hier
-        // könnte
-        // vielleicht
-        // Code
-        // stehen
 
         case 0xFF30CF: // 1
           // Led almost off
