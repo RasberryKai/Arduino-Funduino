@@ -216,16 +216,15 @@ class LEDControl{
 LEDControl ledcontrol;
 
 void setup() {
-  // put your setup code here, to run once:
+  // put your setup code here, to run once
   Serial.begin(9600);
-  // pin decleration
   IrReceiver.begin(IRremotePin, ENABLE_LED_FEEDBACK);
   pinMode(trigger, OUTPUT);
   pinMode(echo, INPUT);
   pinMode(x_pin, INPUT);
-  pinMode(y_pin, INPUT):
+  pinMode(y_pin, INPUT);
   pinMode(button, INPUT);
-  pinMode(licht, INPUT);
+  pinMode(lightsensor, INPUT);
   pinMode(led1, OUTPUT);
   pinMode(led2, OUTPUT);
   digitalWrite(led1, HIGH);
@@ -234,6 +233,6 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  // put your main code here, to run repeatedly
 
 }
