@@ -265,8 +265,9 @@ class Controller { // Controls the motion sensor and Potentiometer (if activated
 
     void Bewegungsmelder() {
       /* Controls sound sensor
-        if it's dark and the measured distance is smaller than the calibratet distance it turns lights on for 10 seconds */
+        if it's dark and the measured distance is smaller than the calibrated distance it turns lights on for 10 seconds */
       Serial.println("CONTROLLER Bewegungsmelder");
+      //If Sensor was triggered
       if (ledcheck) { // If motion-sensor was triggered
         if (bew_poti) {
           Potimeter();
@@ -281,6 +282,7 @@ class Controller { // Controls the motion sensor and Potentiometer (if activated
       licht = bm.licht_abfrage();
       distance = bm.entfernung_abfrage();
 
+      //Actual sensorcheck
       if  (licht && distance < kalibrierwert) {
         if (!bew_poti) {
           digitalWrite(led1, LOW);
